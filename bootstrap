@@ -31,15 +31,6 @@ main(_) ->
     os:putenv("REBAR_PROFILE", "bootstrap"),
     compile_vendored(),
 
-    %% Fetch and build deps required to build rebar3
-    BaseDeps = [{providers, []}
-               ,{getopt, []}
-               ,{cf, []}
-               ,{erlware_commons, ["ec_dictionary.erl", "ec_vsn.erl"]}
-               ,{certifi, ["certifi_pt.erl"]}],
-    Deps = get_deps(),
-    [fetch_and_compile(Dep, Deps) || Dep <- BaseDeps],
-
     %% Build rebar3 modules with compile:file
     bootstrap_rebar3(),
 
@@ -61,7 +52,6 @@ main(_) ->
     code:add_pathsa(DepsPaths),
 
     rebar3:run(["clean", "-a"]),
-    rebar3:run(["as", "prod", "escriptize"]),
 
     %% Done with compile, can turn back on error logger
     error_logger:tty(true).
