@@ -23,14 +23,14 @@
 
 -export_type([repo/0]).
 
-%% repo() extends r3_hex_core:config() with rebar3-specific fields
+%% repo() extends hex_core:config() with rebar3-specific fields
 -type repo() :: #{
     %% rebar3-specific fields
     name => unicode:unicode_binary(),
     repo_name => unicode:unicode_binary(),
     parent => unicode:unicode_binary(),
     mirror_of => term(),
-    %% r3_hex_core:config() fields
+    %% hex_core:config() fields
     api_key => binary() | undefined,
     api_otp => binary() | undefined,
     api_organization => binary() | undefined,
@@ -54,7 +54,7 @@
     trusted => boolean(),
     oauth_exchange => boolean(),
     oauth_exchange_url => binary() | undefined,
-    cli_auth_callbacks => r3_hex_cli_auth:callbacks() | undefined
+    cli_auth_callbacks => hex_cli_auth:callbacks() | undefined
 }.
 
 from_state(BaseConfig, State) ->
@@ -149,7 +149,7 @@ repos(HexConfig) ->
             merge_repos(RepoList ++ [HexDefaultConfig])
     end.
 
-%% merge repos must add a field repo_name to work with r3_hex_core 0.5.0
+%% merge repos must add a field repo_name to work with hex_core 0.5.0
 -spec merge_repos([repo()]) -> [repo()].
 merge_repos(Repos) ->
     lists:foldl(fun(R = #{name := Name}, ReposAcc) ->
@@ -201,7 +201,7 @@ update_repo_list(R, []) ->
     [R].
 
 default_repo() ->
-    HexDefaultConfig = r3_hex_core:default_config(),
+    HexDefaultConfig = hex_core:default_config(),
     HexDefaultConfig#{name => ?PUBLIC_HEX_REPO, repo_verify_origin => repo_verify_origin()}.
 
 repo_verify_origin() ->

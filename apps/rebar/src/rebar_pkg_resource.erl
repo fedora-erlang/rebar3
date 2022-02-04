@@ -141,9 +141,9 @@ format_error({bad_registry_checksum, Name, Vsn, Expected, Found}) ->
 -spec request(rebar_hex_repos:repo(), binary(), binary(), binary() | undefined)
              -> {ok, cached} | {ok, binary(), binary()} | error.
 request(Config, Name, Version, ETag) ->
-    try r3_hex_cli_auth:with_repo(Config, fun(AuthConfig) ->
+    try hex_cli_auth:with_repo(Config, fun(AuthConfig) ->
         Config1 = AuthConfig#{http_etag => ETag},
-        r3_hex_repo:get_tarball(Config1, Name, Version)
+        hex_repo:get_tarball(Config1, Name, Version)
     end) of
         {ok, {200, #{<<"etag">> := ETag1}, Tarball}} ->
             {ok, Tarball, ETag1};
@@ -249,7 +249,7 @@ serve_from_cache(TmpDir, CachePath, Pkg) ->
 serve_from_memory(TmpDir, Binary, {pkg, _Name, _Vsn, OldHash, Hash, _RepoConfig}) ->
     RegistryChecksum = list_to_integer(binary_to_list(Hash), 16),
     OldRegistryChecksum =  maybe_old_registry_checksum(OldHash),
-    case r3_hex_tarball:unpack(Binary, TmpDir) of
+    case hex_tarball:unpack(Binary, TmpDir) of
         {ok, #{outer_checksum := <<Checksum:256/big-unsigned>>} = Res} when RegistryChecksum =/= Checksum ->
             #{inner_checksum := <<OldChecksum:256/big-unsigned>>} = Res,
             %% Not triggerable in tests, but code feels logically wrong without it since inner checksums are not hard

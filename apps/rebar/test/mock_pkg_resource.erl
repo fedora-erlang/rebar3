@@ -101,8 +101,8 @@ mock_download(Opts) ->
                          <<"version">> => Vsn},
 
             Files = all_files(rebar_app_info:dir(AppInfo1)),
-            HexConfig = r3_hex_core:default_config(),
-            {ok, #{tarball := Tarball}} = r3_hex_tarball:create(Metadata, archive_names(Dir, Files), HexConfig#{tarball_files_root => Dir}),
+            HexConfig = hex_core:default_config(),
+            {ok, #{tarball := Tarball}} = hex_tarball:create(Metadata, archive_names(Dir, Files), HexConfig#{tarball_files_root => Dir}),
             Archive = filename:join([Dir, TarApp]),
             file:write_file(Archive, Tarball),
 

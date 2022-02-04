@@ -99,7 +99,7 @@ init_per_testcase(bad_disconnect=Name, Config0) ->
                {pkg, Pkg}
               | Config0],
     Config = mock_config(Name, Config1),
-    meck:expect(r3_hex_repo, get_tarball, fun(_, _, _) ->
+    meck:expect(hex_repo, get_tarball, fun(_, _, _) ->
                                                {error, econnrefused}
                                        end),
     Config;
@@ -133,7 +133,7 @@ good_uncached(Config) ->
     State = ?config(state, Config),
     ?assertEqual(ok,
                  rebar_pkg_resource:download(Tmp, {pkg, Pkg, Vsn, ?good_checksum, ?good_checksum, ?config(repo_config, Config)}, State, #{}, true)),
-    ?assert(meck:called(r3_hex_repo, get_tarball,
+    ?assert(meck:called(hex_repo, get_tarball,
                         [meck:is(fun(#{http_etag := T}) -> T =:= undefined end), '_', '_'])),
     Cache = ?config(cache_dir, Config),
     ?assert(filelib:is_regular(filename:join(Cache, <<Pkg/binary, "-", Vsn/binary, ".tar">>))).
@@ -150,7 +150,7 @@ good_cached(Config) ->
     {ok, Content} = file:read_file(CachedFile),
     ?assertEqual(ok,
                  rebar_pkg_resource:download(Tmp, {pkg, Pkg, Vsn, ?good_checksum, ?good_checksum, ?config(repo_config, Config)}, State, #{}, true)),
-    ?assert(meck:called(r3_hex_repo, get_tarball,
+    ?assert(meck:called(hex_repo, get_tarball,
                         [meck:is(fun(#{http_etag := T}) -> T =:= ?good_etag end), '_', '_'])),
     {ok, Content} = file:read_file(CachedFile).
 
@@ -295,7 +295,7 @@ oauth_download_with_token(Config) ->
                                                    ?config(repo_config, Config)},
                                              State, #{}, true)),
     %% Verify that the Bearer token was sent
-    ?assert(meck:called(r3_hex_repo, get_tarball,
+    ?assert(meck:called(hex_repo, get_tarball,
                         [meck:is(fun(#{repo_key := Key}) -> Key =:= ExpectedBearer end), '_', '_'])),
     Cache = ?config(cache_dir, Config),
     ?assert(filelib:is_regular(filename:join(Cache, <<Pkg/binary, "-", Vsn/binary, ".tar">>))).
@@ -314,9 +314,9 @@ oauth_download_token_refresh(Config) ->
                                                    ?config(repo_config, Config)},
                                              State, #{}, true)),
     %% Verify that refresh was called
-    ?assert(meck:called(r3_hex_api_oauth, refresh_token, '_')),
+    ?assert(meck:called(hex_api_oauth, refresh_token, '_')),
     %% Verify that the new Bearer token was used for retry
-    ?assert(meck:called(r3_hex_repo, get_tarball,
+    ?assert(meck:called(hex_repo, get_tarball,
                         [meck:is(fun(#{repo_key := Key}) -> Key =:= NewBearer end), '_', '_'])),
     Cache = ?config(cache_dir, Config),
     ?assert(filelib:is_regular(filename:join(Cache, <<Pkg/binary, "-", Vsn/binary, ".tar">>))).
@@ -360,8 +360,8 @@ mock_config(Name, Config) ->
                   end, AllDeps),
 
 
-    meck:new(r3_hex_repo, [passthrough]),
-    meck:expect(r3_hex_repo, get_package,
+    meck:new(hex_repo, [passthrough]),
+    meck:expect(hex_repo, get_package,
                 fun(_Config, PkgName) ->
                         Matches = ets:match_object(Tid, {{PkgName,'_'}, '_'}),
                         Releases =
@@ -382,7 +382,7 @@ mock_config(Name, Config) ->
                         Default
                 end),
     Callbacks = rebar_hex_auth:make_callbacks(rebar_state:new()),
-    DefaultConfig = r3_hex_core:default_config(),
+    DefaultConfig = hex_core:default_config(),
     RepoConfig = DefaultConfig#{name => <<"hexpm">>, cli_auth_callbacks => Callbacks},
 
     meck:new(rebar_dir, [passthrough]),
@@ -408,7 +408,7 @@ mock_config(Name, Config) ->
     PkgFile = <<Pkg/binary, "-", Vsn/binary, ".tar">>,
     {ok, PkgContents} = file:read_file(filename:join(?config(data_dir, Config), PkgFile)),
 
-    meck:expect(r3_hex_repo, get_tarball, fun(_, _, _) when GoodCache ->
+    meck:expect(hex_repo, get_tarball, fun(_, _, _) when GoodCache ->
                                                {ok, {304, #{<<"etag">> => ?good_etag}, <<>>}};
                                           (_, _, _) ->
                                                {ok, {200, #{<<"etag">> => ?good_etag}, PkgContents}}
@@ -456,8 +456,8 @@ mock_config_oauth(Name, Config) ->
                                                               outer_checksum=OuterChecksum})
                   end, AllDeps),
 
-    meck:new(r3_hex_repo, [passthrough]),
-    meck:expect(r3_hex_repo, get_package,
+    meck:new(hex_repo, [passthrough]),
+    meck:expect(hex_repo, get_package,
                 fun(_Config, PkgName) ->
                         Matches = ets:match_object(Tid, {{PkgName,'_'}, '_'}),
                         Releases =
@@ -489,7 +489,7 @@ mock_config_oauth(Name, Config) ->
     ok = file:write_file(AuthConfigFile, io_lib:format("~p.~n", [AuthConfig])),
 
     Callbacks = rebar_hex_auth:make_callbacks(rebar_state:new()),
-    DefaultConfig = r3_hex_core:default_config(),
+    DefaultConfig = hex_core:default_config(),
     RepoConfig = DefaultConfig#{name => <<"hexpm">>, trusted => true, cli_auth_callbacks => Callbacks},
 
     meck:new(rebar_dir, [passthrough]),
@@ -514,7 +514,7 @@ mock_config_oauth(Name, Config) ->
     {ok, PkgContents} = file:read_file(filename:join(?config(data_dir, Config), PkgFile)),
 
     %% For OAuth test: verify Bearer token is passed and return success
-    meck:expect(r3_hex_repo, get_tarball,
+    meck:expect(hex_repo, get_tarball,
                 fun(#{repo_key := <<"Bearer ", _/binary>>}, _, _) ->
                         {ok, {200, #{<<"etag">> => ?good_etag}, PkgContents}};
                    (_, _, _) ->
@@ -553,8 +553,8 @@ mock_config_oauth_refresh(Name, Config) ->
                                                               outer_checksum=OuterChecksum})
                   end, AllDeps),
 
-    meck:new(r3_hex_repo, [passthrough]),
-    meck:expect(r3_hex_repo, get_package,
+    meck:new(hex_repo, [passthrough]),
+    meck:expect(hex_repo, get_package,
                 fun(_Config, PkgName) ->
                         Matches = ets:match_object(Tid, {{PkgName,'_'}, '_'}),
                         Releases =
@@ -592,7 +592,7 @@ mock_config_oauth_refresh(Name, Config) ->
     ok = file:write_file(AuthConfigFile, io_lib:format("~p.~n", [AuthConfig])),
 
     Callbacks = rebar_hex_auth:make_callbacks(rebar_state:new()),
-    DefaultConfig = r3_hex_core:default_config(),
+    DefaultConfig = hex_core:default_config(),
     RepoConfig = DefaultConfig#{name => <<"hexpm">>, trusted => true, cli_auth_callbacks => Callbacks},
 
     meck:new(rebar_dir, [passthrough]),
@@ -621,7 +621,7 @@ mock_config_oauth_refresh(Name, Config) ->
     meck:expect(rebar_hex_repos, update_repo_auth_config, fun(_Updates, _RepoName, _State) -> ok end),
 
     %% Return 401 for old token, 200 for new token
-    meck:expect(r3_hex_repo, get_tarball,
+    meck:expect(hex_repo, get_tarball,
                 fun(#{repo_key := Key}, _, _) when Key =:= OldBearer ->
                         {ok, {401, #{}, #{<<"message">> => <<"Unauthorized">>}}};
                    (#{repo_key := Key}, _, _) when Key =:= NewBearer ->
@@ -631,8 +631,8 @@ mock_config_oauth_refresh(Name, Config) ->
                 end),
 
     %% Mock OAuth refresh
-    meck:new(r3_hex_api_oauth, [passthrough]),
-    meck:expect(r3_hex_api_oauth, refresh_token,
+    meck:new(hex_api_oauth, [passthrough]),
+    meck:expect(hex_api_oauth, refresh_token,
                 fun(_Config, _ClientId, _RefreshToken) ->
                         {ok, {200, #{}, #{<<"access_token">> => NewToken,
                                           <<"refresh_token">> => <<"new-refresh-token">>,

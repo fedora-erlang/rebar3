@@ -31,11 +31,11 @@ format_error({missing_package, Pkg}) ->
 
 -spec get(rebar_hex_repos:repo(), binary()) -> {ok, map()} | {error, term()}.
 get(Config, Name) ->
-    handle_get_result(r3_hex_cli_auth:with_api(
+    handle_get_result(hex_cli_auth:with_api(
         read,
         get_package_repo_config(Config),
         fun(AuthConfig) ->
-            r3_hex_api_package:get(AuthConfig, Name)
+            hex_api_package:get(AuthConfig, Name)
         end,
         [{optional, true}]
     )).
@@ -237,8 +237,8 @@ update_package(Name, RepoConfig=#{name := Repo}, State) ->
     ?MODULE:verify_table(State),
     ?DEBUG("Getting definition for package ~ts from repo ~ts",
            [Name, rebar_hex_repos:format_repo(RepoConfig)]),
-    try r3_hex_cli_auth:with_repo(get_package_repo_config(RepoConfig), fun(AuthConfig) ->
-        r3_hex_repo:get_package(AuthConfig, Name)
+    try hex_cli_auth:with_repo(get_package_repo_config(RepoConfig), fun(AuthConfig) ->
+        hex_repo:get_package(AuthConfig, Name)
     end) of
         {ok, {200, _Headers, Package}} ->
             #{releases := Releases} = Package,
@@ -255,7 +255,7 @@ update_package(Name, RepoConfig=#{name := Repo}, State) ->
             fail;
         Error ->
             ?DEBUG("Hex get_package request failed: ~p", [Error]),
-            %% TODO: add better log message. r3_hex_core should export a format_error
+            %% TODO: add better log message. hex_core should export a format_error
             ?WARN("Failed to update package ~ts from repo ~ts", [Name, Repo]),
             fail
     catch

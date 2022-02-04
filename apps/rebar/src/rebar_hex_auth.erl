@@ -3,8 +3,8 @@
 %% @doc
 %% Authentication wrapper for Hex package manager.
 %%
-%% This module provides rebar3-specific callbacks for r3_hex_cli_auth.
-%% See r3_hex_cli_auth for auth resolution order and details.
+%% This module provides rebar3-specific callbacks for hex_cli_auth.
+%% See hex_cli_auth for auth resolution order and details.
 %% @end
 -module(rebar_hex_auth).
 
@@ -56,8 +56,8 @@ persist_tokens(AccessToken, RefreshToken, ExpiresAt, State) ->
 %%====================================================================
 
 %% @private
-%% Build the callbacks map required by r3_hex_cli_auth.
--spec make_callbacks(rebar_state:t()) -> r3_hex_cli_auth:callbacks().
+%% Build the callbacks map required by hex_cli_auth.
+-spec make_callbacks(rebar_state:t()) -> hex_cli_auth:callbacks().
 make_callbacks(State) ->
     #{
         get_auth_config => fun(RepoName) ->
@@ -91,7 +91,7 @@ make_callbacks(State) ->
 
 %% @private
 %% Get auth config for a specific repo from hex.config.
--spec get_repo_auth_config(RepoName, State) -> r3_hex_cli_auth:repo_auth_config() | undefined when
+-spec get_repo_auth_config(RepoName, State) -> hex_cli_auth:repo_auth_config() | undefined when
       RepoName :: unicode:unicode_binary(),
       State :: rebar_state:t().
 get_repo_auth_config(RepoName, State) ->
@@ -154,7 +154,7 @@ prompt_otp(Message) ->
 
 %% @private
 %% Ask user if they want to authenticate.
--spec should_authenticate(r3_hex_cli_auth:auth_prompt_reason()) -> boolean().
+-spec should_authenticate(hex_cli_auth:auth_prompt_reason()) -> boolean().
 should_authenticate(no_credentials) ->
     ?CONSOLE("No Hex credentials found. Would you like to authenticate?", []),
     prompt_yes_no();
