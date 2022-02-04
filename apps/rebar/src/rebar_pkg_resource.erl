@@ -142,7 +142,7 @@ format_error({bad_registry_checksum, Name, Vsn, Expected, Found}) ->
              -> {ok, cached} | {ok, binary(), binary()} | error.
 request(Config, Name, Version, ETag) ->
     Config1 = Config#{http_etag => ETag},
-    try r3_hex_repo:get_tarball(Config1, Name, Version) of
+    try hex_repo:get_tarball(Config1, Name, Version) of
         {ok, {200, #{<<"etag">> := ETag1}, Tarball}} ->
             {ok, Tarball, ETag1};
         {ok, {304, _Headers, _}} ->
@@ -247,7 +247,7 @@ serve_from_cache(TmpDir, CachePath, Pkg) ->
 serve_from_memory(TmpDir, Binary, {pkg, _Name, _Vsn, OldHash, Hash, _RepoConfig}) ->
     RegistryChecksum = list_to_integer(binary_to_list(Hash), 16),
     OldRegistryChecksum =  maybe_old_registry_checksum(OldHash),
-    case r3_hex_tarball:unpack(Binary, TmpDir) of
+    case hex_tarball:unpack(Binary, TmpDir) of
         {ok, #{outer_checksum := <<Checksum:256/big-unsigned>>} = Res} when RegistryChecksum =/= Checksum ->
             #{inner_checksum := <<OldChecksum:256/big-unsigned>>} = Res,
             %% Not triggerable in tests, but code feels logically wrong without it since inner checksums are not hard
