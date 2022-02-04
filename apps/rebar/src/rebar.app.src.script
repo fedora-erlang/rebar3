@@ -25,6 +25,7 @@
                   ssl_verify_fun,
                   certifi,
                   cth_readable,
+                  hex_core,
                   relx,
                   cf,
                   inets,
