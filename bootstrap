@@ -29,7 +29,6 @@ main(_) ->
     filelib:ensure_dir("_build/bootstrap/lib/rebar/ebin/"),
 
     os:putenv("REBAR_PROFILE", "bootstrap"),
-    compile_vendored(),
 
     %% Build rebar3 modules with compile:file
     bootstrap_rebar3(),
@@ -163,14 +162,6 @@ maybe_set_ipfamily({ok, _}, Family) ->
     httpc:set_options([{ipfamily, Family}], rebar);
 maybe_set_ipfamily(_, _Family) ->
     ok.
-
-compile_vendored() ->
-  compile_xrl_file("src/vendored/r3_safe_erl_term.xrl"),
-  Sources = filelib:wildcard(filename:join(["src/vendored", "*.erl"])),
-  OutDir =  filename:absname("_build/bootstrap/lib/rebar/ebin"),
-  code:add_patha(OutDir),
-  Opts = [debug_info,{outdir, OutDir}, return | additional_defines()],
-  [compile_erl_file(X, Opts) || X <- Sources].
 
 compile(App, FirstFiles) ->
     Dir = filename:join(filename:absname("_build/default/lib/"), App),
