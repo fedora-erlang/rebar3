@@ -31,7 +31,7 @@ format_error({missing_package, Pkg}) ->
 
 -spec get(rebar_hex_repos:repo(), binary()) -> {ok, map()} | {error, term()}.
 get(Config, Name) ->
-    try r3_hex_api_package:get(Config, Name) of
+    try hex_api_package:get(Config, Name) of
         {ok, {200, _Headers, PkgInfo}} ->
             {ok, PkgInfo};
         {ok, {404, _, _}} ->
@@ -245,7 +245,7 @@ update_package(Name, RepoConfig=#{name := Repo}, State) ->
     ?MODULE:verify_table(State),
     ?DEBUG("Getting definition for package ~ts from repo ~ts",
            [Name, rebar_hex_repos:format_repo(RepoConfig)]),
-    try r3_hex_repo:get_package(get_package_repo_config(RepoConfig), Name) of
+    try hex_repo:get_package(get_package_repo_config(RepoConfig), Name) of
         {ok, {200, _Headers, Releases}} ->
             _ = insert_releases(Name, Releases, Repo, ?PACKAGE_TABLE),
             {ok, RegistryDir} = rebar_packages:registry_dir(State),
@@ -260,7 +260,7 @@ update_package(Name, RepoConfig=#{name := Repo}, State) ->
             fail;
         Error ->
             ?DEBUG("Hex get_package request failed: ~p", [Error]),
-            %% TODO: add better log message. r3_hex_core should export a format_error
+            %% TODO: add better log message. hex_core should export a format_error
             ?WARN("Failed to update package ~ts from repo ~ts", [Name, Repo]),
             fail
     catch
