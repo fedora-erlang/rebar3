@@ -71,7 +71,10 @@ init(State) ->
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
     ?INFO("Verifying dependencies...", []),
-    do_(State).
+    case os:getenv("IGNORE_MISSING_DEPS") of
+        false -> do_(State);
+        _ -> {ok, State}
+    end.
 
 do_(State) ->
     try
