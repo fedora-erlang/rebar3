@@ -187,8 +187,27 @@ validate_plugin(Plugin) ->
 discover_plugins([], _) ->
     %% don't search if nothing is declared
     [];
-discover_plugins(_, State) ->
-    discover_plugins(State).
+discover_plugins(ConfigPlugins, State) ->
+    %% Try to find system-installed plugins first
+    PluginNames = [plugin_name(P) || P <- ConfigPlugins],
+    SystemPaths = lists:filtermap(
+        fun(P) ->
+            case code:lib_dir(P) of
+                {error, bad_name} -> false;
+                Path -> {true, Path}
+            end
+        end, PluginNames),
+    SrcDirs = rebar_dir:src_dirs(rebar_state:opts(State)),
+    SystemFound = rebar_app_discover:find_apps(SystemPaths, SrcDirs, all, State),
+    PluginsDir = rebar_dir:plugins_dir(State),
+    SystemSetUp = lists:map(fun(App) ->
+        Name = rebar_app_info:name(App),
+        OutDir = filename:join(PluginsDir, Name),
+        prepare_plugin(rebar_app_info:out_dir(App, OutDir))
+    end, SystemFound),
+    %% Combine with project-local plugins
+    ProjectPlugins = discover_plugins(State),
+    rebar_utils:sort_deps(SystemSetUp ++ ProjectPlugins).
 
 discover_plugins(State) ->
     %% only support this mode in an umbrella project to avoid cases where
@@ -219,6 +238,12 @@ discover_plugins(State) ->
             end, Found),
             rebar_utils:sort_deps(SetUp)
     end.
+
+%% Extract plugin name from various formats
+plugin_name({Plugin, _, _, _}) when is_atom(Plugin) -> Plugin;
+plugin_name({Plugin, _, _}) when is_atom(Plugin) -> Plugin;
+plugin_name({Plugin, _}) when is_atom(Plugin) -> Plugin;
+plugin_name(Plugin) when is_atom(Plugin) -> Plugin.
 
 is_umbrella(State) ->
     %% We can't know if this is an umbrella project before running app discovery,
