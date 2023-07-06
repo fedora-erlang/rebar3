@@ -187,7 +187,15 @@ validate_plugin(Plugin) ->
 discover_plugins([], _) ->
     %% don't search if nothing is declared
     [];
-discover_plugins(_, State) ->
+discover_plugins(ConfigPlugins, State) ->
+    LocalPlugins = lists:filtermap(fun({P, _Ver}) -> case code:lib_dir(P) of {error,bad_name} -> false; Path -> {true, Path} end end, ConfigPlugins),
+    Found = rebar_app_discover:find_apps(LocalPlugins, State),
+    PluginsDir = rebar_dir:plugins_dir(State),
+    lists:map(fun(App) ->
+        Name = rebar_app_info:name(App),
+        OutDir = filename:join(PluginsDir, Name),
+        prepare_plugin(rebar_app_info:out_dir(App, OutDir))
+    end, Found),
     discover_plugins(State).
 
 discover_plugins(State) ->
