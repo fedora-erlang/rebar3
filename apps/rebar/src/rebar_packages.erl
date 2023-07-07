@@ -233,7 +233,13 @@ parse_checksum(<<Checksum:256/big-unsigned>>) ->
 parse_checksum(Checksum) ->
     Checksum.
 
-update_package(Name, RepoConfig=#{name := Repo}, State) ->
+update_package(Name, RepoConfig, State) ->
+    case os:getenv("IGNORE_MISSING_DEPS") of
+        false -> do_update_package(Name, RepoConfig, State);
+        _ -> ok
+    end.
+
+do_update_package(Name, RepoConfig=#{name := Repo}, State) ->
     ?MODULE:verify_table(State),
     ?DEBUG("Getting definition for package ~ts from repo ~ts",
            [Name, rebar_hex_repos:format_repo(RepoConfig)]),
