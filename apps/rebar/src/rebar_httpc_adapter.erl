@@ -3,6 +3,7 @@
 -module(rebar_httpc_adapter).
 -behaviour(hex_http).
 -export([request/5]).
+-export([request_to_file/6]).
 
 %%====================================================================
 %% API functions
@@ -14,6 +15,22 @@ request(Method, URI, ReqHeaders, Body, AdapterConfig) ->
             {error, {offline, URI}};
         _ ->
             request_online(Method, URI, ReqHeaders, Body, AdapterConfig)
+    end.
+
+request_to_file(Method, URI, ReqHeaders, Body, Filename, AdapterConfig) ->
+    case os:getenv("REBAR_OFFLINE") of
+        "1" ->
+            {error, {offline, URI}};
+        _ ->
+            case request_online(Method, URI, ReqHeaders, Body, AdapterConfig) of
+                {ok, {StatusCode, RespHeaders, RespBody}} ->
+                    case file:write_file(Filename, RespBody) of
+                        ok -> {ok, {StatusCode, RespHeaders}};
+                        {error, Reason} -> {error, Reason}
+                    end;
+                {error, Reason} ->
+                    {error, Reason}
+            end
     end.
 
 %%====================================================================
